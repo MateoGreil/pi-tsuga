@@ -1,0 +1,191 @@
+{
+  "repository": "https://github.com/tsuga-dev/agent-plugins",
+  "commit": "611e2f2431c4f2b246d4ca637bc7d080065e4f9f",
+  "version": "0.12.6",
+  "files": [
+    {
+      "path": "build-incident-history/RECOMMENDED_PROMPT.md",
+      "sha256": "8594f7f7d07a9c68227ffa5d305992dcaccfb8820d97dc901ee7002a064c75c3"
+    },
+    {
+      "path": "build-incident-history/SKILL.md",
+      "sha256": "f8d368f65ffff3c87e08841143ee8c061815758fa29e1475c394d38dabe0469e"
+    },
+    {
+      "path": "build-incident-history/references/INPUT_LAYOUT.md",
+      "sha256": "da788f6be2c0cf28dba4b993ac9150d510745e0bd6f7aa0051d3a3781cb24a58"
+    },
+    {
+      "path": "build-incident-history/references/LESSONS.md",
+      "sha256": "1445fe090d7e1138129fedb41bfb2754d3725617d7610cef044fcd67b6b35840"
+    },
+    {
+      "path": "build-incident-history/references/PROCEDURE.md",
+      "sha256": "b97627812bfa4bf8cecb43db28182164f59c6e866b138a750fc53fb143c722bf"
+    },
+    {
+      "path": "build-incident-history/references/SUBAGENT_PROMPT.md",
+      "sha256": "29407ee97113fb1b09f3bde25c52d1c2914cfc1251cb38b7af332019b49983bf"
+    },
+    {
+      "path": "build-incident-history/references/SUMMARY_TEMPLATE.md",
+      "sha256": "0965c7524ab5d4c7a5f820ea3b444c1c8e1710652c3daef22b999ad51cc7028c"
+    },
+    {
+      "path": "build-incident-history/references/VERIFICATION.md",
+      "sha256": "043630f79604b3cae8f433d6daa973f61b88eb92879ccf7068d3ea6e6a1f9706"
+    },
+    {
+      "path": "build-knowledge-company/RECOMMENDED_PROMPT.md",
+      "sha256": "f2a0497bfa9d747610249029367dfab320efe32fcfe90b6ec59ebc46cb1dda28"
+    },
+    {
+      "path": "build-knowledge-company/SKILL.md",
+      "sha256": "d4c981f85ca9635476728ef7bdbafc38d4198d983ceaff3baae6e57d89dfaa4f"
+    },
+    {
+      "path": "build-knowledge-company/references/CLI_TRANSLATION.md",
+      "sha256": "8aaf2b572fb698896df7b56521469e4aa8fb5e26f1c1b9fffea52f4c633b6017"
+    },
+    {
+      "path": "build-knowledge-company/references/INPUT_LAYOUT.md",
+      "sha256": "d113ba02ac31b63ac87bd03c3a414bda2d3f8d499b693b91f381189da72f17ef"
+    },
+    {
+      "path": "build-knowledge-company/references/LESSONS.md",
+      "sha256": "b0e42f67d6f7a6706bc0e6da7a600987d23ab0062d3c5faa14a12078f61abf7d"
+    },
+    {
+      "path": "build-knowledge-company/references/PROCEDURE.md",
+      "sha256": "6f01bfa1dd9ac287bd455f6b6dcde9e8d7531546889657b49770e47d65fb4862"
+    },
+    {
+      "path": "build-knowledge-company/references/SERVICE_KNOWLEDGE_TEMPLATE.md",
+      "sha256": "40863903b1e8eca64d8f2889f67724a5c16f1882bd925a6a6c5dde1359ac86a8"
+    },
+    {
+      "path": "build-knowledge-company/references/SKILL_TEMPLATE.md",
+      "sha256": "d6ae21c7f47e5604121620e7b479a7b26771182b130e92a6b676e6ab463cdb2e"
+    },
+    {
+      "path": "build-knowledge-company/references/SUBAGENT_PROMPT.md",
+      "sha256": "2522aee4c9a144e4b056e3589d5cc49b4fc0cf1fbf67fc2c479522594ba600d2"
+    },
+    {
+      "path": "build-knowledge-company/references/TEAM_KNOWLEDGE_TEMPLATE.md",
+      "sha256": "c6d5ad8f2c07f62d54f6829066f6584acc0861790c25a96fb8b6da4d647e8ec7"
+    },
+    {
+      "path": "build-knowledge-company/references/VERIFICATION.md",
+      "sha256": "a5433721fc01a2444963afc75a700b5a91b758a05e6f81b898c64dd5bd7d28f6"
+    },
+    {
+      "path": "check-skill-health/SKILL.md",
+      "sha256": "e66806b20ca3ad65bbf52282db84f7627a7036829eec39322edabc8e9f869fd7"
+    },
+    {
+      "path": "check-skill-health/references/CHECKLIST.md",
+      "sha256": "59d760a2d472950c29001f244e032621a4e5647c138f8ad7d42d9c5c92bce51f"
+    },
+    {
+      "path": "check-skill-health/references/RULES.md",
+      "sha256": "a4ac0473d92aea9fe465567d420c7a37f0dea581863ec6e810d4bcd3ca493156"
+    },
+    {
+      "path": "check-skill-health/scripts/check-forbidden-tokens.sh",
+      "sha256": "a54f7beb7c2e33d88e8c9db842838139e747f2655b902fd22d24e5b1dfd886f2"
+    },
+    {
+      "path": "check-skill-health/scripts/check-frontmatter.sh",
+      "sha256": "11e70bf1f69b38e399d63943899f4ddf425e6fb67f4b8f2408a6bc0c2eb47525"
+    },
+    {
+      "path": "check-skill-health/scripts/check-incident-history.sh",
+      "sha256": "1c468375646bb1fee6c22d2ec1534b8d7578178d0798a2bfa8ea4f3f3dc03506"
+    },
+    {
+      "path": "check-skill-health/scripts/check-knowledge-company.sh",
+      "sha256": "63b5787d67fc3df1f91fae4c572e9d604914025b3c52cb68d3adc2e9cf9155e1"
+    },
+    {
+      "path": "check-skill-health/scripts/check-skill-length.sh",
+      "sha256": "91b0a3e3277210c590b9ada7253148191e0129178ca830af56fb01f73947aacd"
+    },
+    {
+      "path": "check-skill-health/scripts/lint-all.sh",
+      "sha256": "fd0b037a8e441985fc63124e4a55ffb8c4382a8391315a773fdb4aac783a7cae"
+    },
+    {
+      "path": "check-skill-health/scripts/sample-execute-commands.sh",
+      "sha256": "0ecb34e6989402174c530ce51696097334bfc87781c00ce081a0ad9553cd277d"
+    },
+    {
+      "path": "gh/SKILL.md",
+      "sha256": "6c94995d21a94fd9d61a50ee47ffc56458000b484be1170187c3b533aab5d204"
+    },
+    {
+      "path": "incident-investigation/SKILL.md",
+      "sha256": "80c558df08b1453c74c52bceaf2ac020fc30b66c9644c6b18bdac8fa65397b7a"
+    },
+    {
+      "path": "incident-investigation/agents/openai.yaml",
+      "sha256": "6e714e425bcfd77fa2ba007b6bc9d5381c4dfc2b2c7f46fa8c6dbb01615a7c49"
+    },
+    {
+      "path": "index.json",
+      "sha256": "dd9f1250d91689f6dcc5247de868b81daf61024c62902e7ac7e6f20f6b64207a"
+    },
+    {
+      "path": "knowledge-technology/SKILL.md",
+      "sha256": "e6ee7c561b6b4f5fa463cd0847ca05f3d781ed367201860971a2aaa158098449"
+    },
+    {
+      "path": "otel-collector/SKILL.md",
+      "sha256": "2945af99046d20c2b2aa9eaaca7221a7859268c3b2b7512557e3fbd256aac41d"
+    },
+    {
+      "path": "otel-instrumentation/SKILL.md",
+      "sha256": "c1b32cfd817a479adef010dff5c722059a0d53e4eefa362edb8f1bf7b1f0fc24"
+    },
+    {
+      "path": "signal-choice-advisor/SKILL.md",
+      "sha256": "953393de13e7447c0eef5fefcc08813cf9e1c7c9605b01d3f8899c0c7f67dd73"
+    },
+    {
+      "path": "tsuga-analyze-trace-latency/SKILL.md",
+      "sha256": "15d26bbf2e1f0eb81ad6abfcceae4fac9a28ab22a155d09404d24f44cc394676"
+    },
+    {
+      "path": "tsuga-audit-monitor-coverage/SKILL.md",
+      "sha256": "ea0a17c70647ad2a7d96120dec9900dd3d70849bc650cddf8899a6cd89af385a"
+    },
+    {
+      "path": "tsuga-audit-telemetry-quality/SKILL.md",
+      "sha256": "e3adce8d87405da784afbfc0438fa8757ec06cd7914f3e80b34548a9c4a629cd"
+    },
+    {
+      "path": "tsuga-build-dashboard/SKILL.md",
+      "sha256": "010941cd7a6c8a7342aaf1a4d3da76ab2203ca97fa4e99f5740ff9f26494f9ab"
+    },
+    {
+      "path": "tsuga-cli/SKILL.md",
+      "sha256": "4e90783b7188396fe6dcc22a8d5a382afd1df0b37d23cf67d8b078d4a7e28c48"
+    },
+    {
+      "path": "tsuga-contrast-sets/SKILL.md",
+      "sha256": "ff4856d6991dd3a16dc2807072748f29e97a51d2c5059cd650a2056f208b1da6"
+    },
+    {
+      "path": "tsuga-debug-telemetry-ingestion/SKILL.md",
+      "sha256": "efa32ddca1b84939d866881ec673427365af86f3f832c4b49e05cdd81b58c74f"
+    },
+    {
+      "path": "tsuga-investigate-errors/SKILL.md",
+      "sha256": "f85e2ad0c7d4c51bc42faa5e6e684e8159272ef81ec5d5b223a00746081025bf"
+    },
+    {
+      "path": "tsuga-investigate-service-health/SKILL.md",
+      "sha256": "c610445c92e989b2ad83c5dd7fa068e0f7ab074e658ba787cdc166793f99a3dc"
+    }
+  ]
+}

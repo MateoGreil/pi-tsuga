@@ -1,0 +1,214 @@
+#!/bin/bash
+# sample-execute-commands.sh — pick N SERVICE_KNOWLEDGE.md files,
+# extract the first `tsuga` command from each, and audit whether it is safe to run.
+#
+# Usage: sample-execute-commands.sh <knowledge-company-skill-dir> [sample-count]
+#
+# This is opt-in and intentionally read-only: it never executes extracted commands.
+
+set -uo pipefail
+
+SKILL_DIR="${1:-}"
+N="${2:-5}"
+
+if [ -z "$SKILL_DIR" ]; then
+  echo "usage: $0 <knowledge-company-skill-dir> [sample-count]" >&2
+  exit 2
+fi
+
+case "$N" in
+  '' | *[!0-9]*) echo "sample-count must be a positive integer (got '$N')" >&2; exit 2 ;;
+esac
+if [ "$N" -lt 1 ]; then
+  echo "sample-count must be at least 1 (got '$N')" >&2
+  exit 2
+fi
+
+TEAMS="$SKILL_DIR/references/teams"
+if [ ! -d "$TEAMS" ]; then
+  # Not a knowledge-company skill; skip silently (no service dossiers to audit).
+  exit 0
+fi
+
+# Pick up to N SERVICE_KNOWLEDGE.md files. Shuffle first: taking the traversal prefix would audit
+# the same dossiers on every run and never reach the rest of the fleet.
+candidates=()
+while IFS= read -r f; do
+  candidates+=("$f")
+done < <(find "$TEAMS" -name SERVICE_KNOWLEDGE.md -path '*/services/*' 2>/dev/null)
+
+for ((i = ${#candidates[@]} - 1; i > 0; i--)); do
+  j=$((RANDOM % (i + 1)))
+  tmp="${candidates[i]}"
+  candidates[i]="${candidates[j]}"
+  candidates[j]="$tmp"
+done
+
+files=("${candidates[@]:0:$N}")
+
+if [ ${#files[@]} -eq 0 ]; then
+  echo "WARN [sample-execute] $SKILL_DIR — no SERVICE_KNOWLEDGE.md files found"
+  exit 0
+fi
+
+passed=0
+failed=0
+failures=""
+
+is_read_only_tsuga_command() {
+  local cmd="$1"
+  local cluster_id=""
+  local rest=""
+
+  # Shell metacharacters, in two passes because quoting protects some and not others.
+  #
+  # A command substitution runs inside double quotes, and a pipe or a semicolon has no business in
+  # a documented command however it is quoted, so these are judged on the command as written.
+  case "$cmd" in
+    *"|"*|*";"*|*"&"*|*"\`"*|*'$('*|*'${'*)
+      return 1
+      ;;
+  esac
+
+  # An angle bracket is the ambiguous one: a TQL comparison (`--query "duration:>10000"`) and a
+  # placeholder (`--query "name:<svc>"`) are argument text, and both are always quoted because the
+  # query has to survive the shell. So drop quoted spans and reject whatever bracket is left -
+  # spaced (`> out`), glued (`list<foo>`), a descriptor (`2>file`), or a substitution (`list<(cmd)`).
+  local unquoted
+  unquoted=$(printf '%s' "$cmd" | LC_ALL=C sed -E "s/'[^']*'//g; s/\"[^\"]*\"//g")
+  case "$unquoted" in
+    *"<"*|*">"*)
+      return 1
+      ;;
+  esac
+
+  case "$cmd" in
+    tsuga\ --cluster\ *\ *)
+      cmd="${cmd#tsuga --cluster }"
+      cluster_id="${cmd%% *}"
+      rest="${cmd#"$cluster_id"}"
+      case "$cluster_id" in
+        ""|-*) return 1 ;;
+      esac
+      case "$rest" in
+        " "*) cmd="tsuga$rest" ;;
+        *) return 1 ;;
+      esac
+      ;;
+  esac
+
+  has_arg() {
+    # Both spellings count: the CLI requires `--from=-1h` for dash-prefixed values.
+    case " $cmd " in
+      *" $1 "[![:space:]-]*) return 0 ;;
+      *" $1="[![:space:]]*) return 0 ;;
+      *) return 1 ;;
+    esac
+  }
+
+  has_from_to() {
+    has_arg --from && has_arg --to
+  }
+
+  # Bounded, not a specific number: templates legitimately use other small limits.
+  # $1 is the endpoint's own ceiling — logs cap at 1000, traces at 10000.
+  has_bounded_max_results() {
+    local value
+    case " $cmd " in
+      *" --max-results "*) value="${cmd##*--max-results }"; value="${value%% *}" ;;
+      *" --max-results="*) value="${cmd##*--max-results=}"; value="${value%% *}" ;;
+      *) return 1 ;;
+    esac
+    case "$value" in
+      '' | *[!0-9]*) return 1 ;;
+    esac
+    [ "$value" -ge 1 ] && [ "$value" -le "$1" ]
+  }
+
+  case "$cmd" in
+    tsuga\ logs\ search\ *)
+      if has_from_to && has_bounded_max_results 1000; then
+        return 0
+      fi
+      return 1
+      ;;
+    tsuga\ traces\ search\ *)
+      if has_from_to && has_bounded_max_results 10000; then
+        return 0
+      fi
+      return 1
+      ;;
+    tsuga\ logs\ patterns\ *|tsuga\ logs\ new-error-patterns\ *|tsuga\ logs\ error-pattern-increases\ *|tsuga\ logs\ attributes\ *|tsuga\ metrics\ list*|tsuga\ metrics\ get\ *)
+      has_from_to
+      return
+      ;;
+    tsuga\ metrics\ assets-usage\ *)
+      return 0
+      ;;
+    tsuga\ aggregation\ scalar\ *|tsuga\ aggregation\ timeseries\ *)
+      case "$cmd" in
+        # A body file is the documented form; its timeRange lives in the file, not the command.
+        *" -f "*|*" --file "*) return 0 ;;
+        *" -d "*|*" --data "*)
+          case "$cmd" in
+            *timeRange*from*to*) return 0 ;;
+          esac
+          ;;
+      esac
+      return 1
+      ;;
+    tsuga\ services\ list*|tsuga\ services\ get\ *|tsuga\ teams\ list*|tsuga\ teams\ get\ *|tsuga\ monitors\ list*|tsuga\ monitors\ get\ *|tsuga\ dashboards\ list*|tsuga\ dashboards\ get\ *|tsuga\ log-routes\ list*|tsuga\ log-routes\ get\ *|tsuga\ notification-rules\ list*|tsuga\ notification-rules\ get\ *|tsuga\ notification-silences\ list*|tsuga\ notification-silences\ get\ *|tsuga\ quality-reports\ list*|tsuga\ docs\ search\ *|tsuga\ docs\ get\ *)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+for f in "${files[@]}"; do
+  # Extract the first `tsuga ...` command from the Ready-to-run section.
+  # Strategy: read the Ready-to-run block, extract bash fences, pick the first line
+  # starting with `tsuga ` (skipping heredoc bodies, variables, comments).
+  cmd=$(awk '
+    /^## Ready-to-run/ { in_ready=1; next }
+    in_ready && /^## / { in_ready=0 }
+    in_ready && /^```bash$/ { in_bash=1; next }
+    in_ready && /^```$/ { in_bash=0 }
+    in_ready && in_bash && /^tsuga / {
+      line = $0
+      while (line ~ /\\$/) {
+        sub(/\\$/, "", line)
+        if ((getline nextline) <= 0) break
+        line = line " " nextline
+      }
+      print line
+      exit
+    }
+  ' "$f")
+
+  if [ -z "$cmd" ]; then
+    echo "  SKIP: $f — no tsuga command in Ready-to-run section"
+    continue
+  fi
+
+  if is_read_only_tsuga_command "$cmd"; then
+    passed=$((passed+1))
+  else
+    failed=$((failed+1))
+    failures+=$'\n'"  FAIL: $(basename "$(dirname "$f")")"$'\n'"    unsafe or non-read-only command: $cmd"
+  fi
+done
+
+total=$((passed + failed))
+
+if [ $failed -eq 0 ] && [ $passed -gt 0 ]; then
+  echo "PASS [sample-execute] $SKILL_DIR — $passed/$total commands audited as read-only"
+  exit 0
+elif [ $failed -gt 0 ]; then
+  echo "FAIL [sample-execute] $SKILL_DIR — $failed/$total sampled commands are unsafe$failures"
+  exit 1
+else
+  echo "WARN [sample-execute] $SKILL_DIR — 0 commands audited (none found in sampled files)"
+  exit 0
+fi

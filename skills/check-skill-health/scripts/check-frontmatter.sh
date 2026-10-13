@@ -1,0 +1,104 @@
+#!/bin/bash
+# check-frontmatter.sh — validate a skill's SKILL.md frontmatter.
+#
+# Usage: check-frontmatter.sh <skill-dir>
+# Exit:  0 = PASS/WARN, 1 = FAIL, 2 = script error.
+#
+# Checks:
+#   - SKILL.md exists
+#   - Frontmatter block present (two `---` delimiters at top)
+#   - name: field present, non-empty
+#   - name value matches enclosing folder name (warn only)
+#   - description: field present, non-empty
+#   - description <= 1024 characters — the loader's hard limit
+#   - description word count in [30, 200], with warn outside [50, 120]
+
+set -uo pipefail
+
+SKILL_DIR="${1:-}"
+if [ -z "$SKILL_DIR" ]; then
+  echo "usage: $0 <skill-dir>" >&2
+  exit 2
+fi
+
+SKILL_MD="$SKILL_DIR/SKILL.md"
+if [ ! -f "$SKILL_MD" ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — SKILL.md not found"
+  exit 1
+fi
+
+# Extract the first frontmatter block (lines between the first two `---`).
+# The opening `---` must be line 1 and the block must be closed, otherwise arbitrary body text
+# could be read as frontmatter.
+if [ "$(head -1 "$SKILL_MD")" != "---" ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — SKILL.md must open with \`---\` on line 1"
+  exit 1
+fi
+if [ "$(grep -c '^---$' "$SKILL_MD")" -lt 2 ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — frontmatter block is not closed with \`---\`"
+  exit 1
+fi
+fm=$(awk 'NR==1 && /^---$/ {state=1; next} state==1 && /^---$/ {exit} state==1 {print}' "$SKILL_MD")
+if [ -z "$fm" ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — frontmatter block is empty"
+  exit 1
+fi
+
+# Pull `name:` value.
+name=$(echo "$fm" | awk '/^name:/ { sub(/^name: */, ""); gsub(/^["'"'"']|["'"'"']$/, ""); print; exit }')
+if [ -z "$name" ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — name: field missing or empty"
+  exit 1
+fi
+
+# Pull `description:` — single-line, optionally quoted.
+desc_raw=$(echo "$fm" | awk '/^description:/ { sub(/^description:[[:space:]]*/, ""); print; exit }')
+desc="${desc_raw#\"}"
+desc="${desc%\"}"
+if [ -z "$desc" ]; then
+  echo "FAIL [frontmatter] $SKILL_DIR — description: field missing or empty"
+  exit 1
+fi
+
+# Character count is measured on the line as written, quotes included: that is the span the loader
+# sees, and a skill over the limit is dropped with no error anywhere.
+char_count=${#desc_raw}
+word_count=$(echo "$desc" | wc -w | tr -d ' ')
+
+status="PASS"
+msg=""
+
+# Hard bounds.
+if [ "$char_count" -gt 1024 ]; then
+  status="FAIL"
+  msg="description too long ($char_count chars; the loader drops a skill over 1024 and warns nowhere)"
+elif [ "$word_count" -lt 30 ]; then
+  status="FAIL"
+  msg="description too short ($word_count words; min 30)"
+elif [ "$word_count" -gt 200 ]; then
+  status="FAIL"
+  msg="description too long ($word_count words; max 200)"
+# Soft bounds.
+elif [ "$word_count" -lt 50 ]; then
+  status="WARN"
+  msg="description short ($word_count words; recommended 50-120)"
+elif [ "$word_count" -gt 120 ]; then
+  status="WARN"
+  msg="description long ($word_count words; recommended 50-120)"
+fi
+
+# Folder-name vs name-field match (soft).
+folder_name=$(basename "$SKILL_DIR")
+name_match_note=""
+if [ "$name" != "$folder_name" ]; then
+  name_match_note=" (folder '$folder_name' != name '$name')"
+  # Surface it: lint-all only counts WARN/FAIL lines, so a note alone is invisible.
+  [ "$status" = "PASS" ] && status="WARN"
+fi
+
+echo "$status [frontmatter] $SKILL_DIR — name: $name, description: $word_count words / $char_count chars${msg:+ — $msg}${name_match_note}"
+
+case "$status" in
+  PASS|WARN) exit 0 ;;
+  FAIL)      exit 1 ;;
+esac

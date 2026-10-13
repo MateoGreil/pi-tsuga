@@ -1,0 +1,24 @@
+{
+  "name": "pi-tsuga",
+  "version": "0.1.0",
+  "description": "All official Tsuga observability skills adapted for the Pi coding agent",
+  "license": "MIT",
+  "type": "module",
+  "keywords": ["pi-package", "tsuga", "observability", "opentelemetry"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mateogreil/pi-tsuga.git"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "files": ["skills", "references", "LICENSE", "UPSTREAM.md", "upstream.json"],
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "lint:skills": "bash skills/check-skill-health/scripts/lint-all.sh --quiet skills/*/",
+    "sync:upstream": "node scripts/import-upstream.mjs"
+  },
+  "pi": {
+    "skills": ["./skills"]
+  }
+}

@@ -1,0 +1,116 @@
+<!-- skill-lint: allow-forbidden-examples — this file documents the forbidden patterns as teaching examples -->
+
+# RULES — why each automated check exists, and how to fix a violation
+
+One entry per script. If a check fails, read the corresponding entry and fix the root cause — do not suppress the check.
+
+## Contents
+
+- [check-frontmatter.sh](#check-frontmattersh)
+- [check-skill-length.sh](#check-skill-lengthsh)
+- [check-forbidden-tokens.sh](#check-forbidden-tokenssh)
+- [check-incident-history.sh](#check-incident-historysh)
+- [check-knowledge-company.sh](#check-knowledge-companysh)
+- [sample-execute-commands.sh (opt-in)](#sample-execute-commandssh-opt-in)
+- [When a WARN is acceptable](#when-a-warn-is-acceptable)
+
+## check-frontmatter.sh
+
+**Checks:** `name:` field, `description:` field, description character count, description word count.
+
+**Why:** the description is the *only* thing the agent sees at skill-selection time. Everything else in the skill is loaded after the selection decision has already been made. A vague description means the skill never fires.
+
+**How to fix a FAIL:**
+- Missing frontmatter → add `---` delimiters at top of SKILL.md with `name:` and `description:` fields.
+- Description > 1024 characters → the loader drops the whole skill and nothing reports it, so the skill goes silently missing rather than firing badly. This is the one length bound with a hard external consumer: `packages/documentation/scripts/public-plugin-tree.test.ts` fails the build on it. Cut the description, do not reword it longer.
+- Description < 30 words → too thin to carry triggers. Add 3–5 concrete trigger phrases (service names, error patterns, tool mentions). Target 50–120 words.
+- Description > 200 words → dumping procedure into the metadata. Move the how-to into the body; keep the description to _what_ and _when_.
+- Description 30–50 or 120–200 words (WARN) → usable but tighten if trivial.
+
+A 120-word description sits around 900 characters, so the word bound normally binds first; the character check catches the description that packs long identifiers or paths into few words.
+
+## check-skill-length.sh
+
+**Checks:**
+- SKILL.md body ≤ 500 lines.
+- references/ depth ≤ 1 level (exempt for `knowledge-company`'s teams/services taxonomy and `incident-history`'s per-incident folders).
+- A flat reference page over 100 lines carries a table of contents.
+- Bundle size ≤ 15 MB.
+- No "When to use" heading in the body.
+
+**Why:** SKILL.md is loaded in full into context once the skill is selected. Every extra line in SKILL.md costs tokens on every invocation. Move long content to `references/`, which are loaded only when referenced.
+
+**How to fix a FAIL:**
+- Body > 500 lines → pull the bulk into `references/<topic>.md` and replace with a pointer in SKILL.md. Rule of thumb: if a section is > 40 lines, it belongs in a reference.
+- Deep references → flatten. Prefer `references/topic.md` over `references/area/subarea/topic.md`. An agent reaches a reference page only through a path spelled out in the file it came from — `references/` is not search-indexed and there is no directory-listing tool — so every extra level is another hop that has to be spelled out somewhere or the page is unreachable. The exemptions are `knowledge-company`'s `teams/<team>/services/<service>/` and `incident-history`'s `incidents/<INC-id>/`: both are generated taxonomies whose paths are derivable from a name the agent already has, so nothing has to link them one by one.
+- Long reference page with no TOC (WARN) → add a `## Contents` heading or a bullet list of same-page anchor links in the first 40 lines. An agent that fetches a 200-line page pays for all of it; a TOC lets it `head` the file, decide the page is wrong, and stop. Generated dossiers under a nested path are not checked — they are read whole.
+- Bundle > 15 MB → prune old references, remove committed-by-accident binaries (check with `find <skill> -size +1M`).
+- "When to use" in body (WARN) → move the trigger logic to the frontmatter description. The body is loaded after selection; anything in it can't influence selection.
+
+## check-forbidden-tokens.sh
+
+**Checks:** 6 patterns that have bitten us before.
+
+1. **MCP-tool verb prefixes** (`search-logs`, `aggregate-timeseries`, etc.) — these are not runnable `tsuga` CLI commands. Subagents with access to MCP tools write them naturally.
+2. **MCP-tool argument shape** written as bare tokens (`query=`, `from=-`, `to=now`, `limit=`, …) — same problem. The real CLI uses `--query`, `--from`, `--to`, `--max-results`. Only the bare form is forbidden: the flag form `--from=-1h` is required, because a bare `-1h` lexes into the short options `-1` and `-h`.
+3. **`rtk` prefix** — the RTK hook is transparent; writing `rtk tsuga …` in docs is noise. `build-incident-history` and `build-knowledge-company` ban the same spelling in their own generation gates, so a dossier that carries it came from a template that drifted.
+4. **Singular resource verbs** (`tsuga monitor get` instead of `tsuga monitors get`). Every resource group in the CLI is plural, so a singular group is wrong whatever the CLI adds next.
+5. **Command groups that do not exist** — `tsuga spans search`, `tsuga trace get`, `tsuga alerts list`. The telemetry groups are `logs`, `traces`, `metrics` and `rum`, plus `aggregation`. Matched only in command position (line start, or opening an inline code span) so prose that names a trace or a metric is left alone.
+6. **`--limit`** — not a flag on the telemetry commands. Only `logs search`, `traces search` and `rum search` take `--max-results`; `metrics`, `aggregation` and `interesting-fields` take neither and carry their bounds in the JSON body or not at all. `--limit` is valid on the paginated resource lists (`tsuga monitors list --limit`, dashboards, teams, services, log-routes), so flag it only on the telemetry groups the checker covers: `logs`, `traces`, `metrics`, `rum`, `aggregation`, and `interesting-fields`.
+
+**Why:** the single most expensive bug class in the first build. Subagents emit plausible-looking pseudo-CLI, the document looks right on review, and it breaks when a real user tries to copy-paste.
+
+**How to fix a FAIL:** do NOT hand-edit the generated file. Go back to the subagent template / prompt, fix the rule, regenerate the affected files. Use the `build-knowledge-company` skill's CLI translation contract for the full command-shape rules.
+
+## check-incident-history.sh
+
+**Checks (only fires if target is an incident-history skill):**
+- Every `INC-*/` has SUMMARY.md + metadata.json.
+- Every metadata.json parses + has ISO-shaped `last_iso`, `declared_at`, and one of `inc_id` / `incident_id` matching the folder name.
+- Every SUMMARY.md carries the canonical headings. The checker enforces the core set (`## Root cause`, `## Diagnostic path`) as whole heading lines; the rest are conventions.
+- `_inventory.csv` row count == folder count.
+
+**Why:**
+- `entrypoint.sh` reads `metadata.json` to filter future incidents via `SNAPSHOT_AT - 20 min` cutoff. Missing required fields → the incident gets silently dropped.
+- Retrieval depends on stable section names. Adding a section or renaming a heading breaks analogue search.
+- The inventory is the quick-access index for the investigation runtime's retrieval. A stale row count means orphaned entries.
+
+**How to fix a FAIL:** regenerate the specific INC-id via the `build-incident-history` skill. Don't hand-edit.
+
+## check-knowledge-company.sh
+
+**Checks (only fires if target is a knowledge-company skill):**
+- Required top-level files present: `COMPANY_GENERAL_KNOWLEDGE.md`, `COMPANY_TELEMETRY_KNOWLEDGE.md`.
+- `RAW_TELEMETRY_KNOWLEDGE.md` *not* present (its content belongs in `COMPANY_TELEMETRY_KNOWLEDGE.md`).
+- Every `teams/<team>/` has TEAM_KNOWLEDGE.md.
+- Every `teams/<team>/services/<service>/` has SERVICE_KNOWLEDGE.md.
+- SERVICE_KNOWLEDGE.md canonical sections present.
+- TEAM_KNOWLEDGE.md basic sections present (warn only).
+- File paths referenced from SKILL.md resolve (warn only).
+
+**Why:** same logic — retrieval and cross-linking are section-name-stable. The "must not exist" check on RAW_TELEMETRY guards against regression: that content belongs in `COMPANY_TELEMETRY_KNOWLEDGE.md`, not in a separate file.
+
+**How to fix a FAIL:** regenerate the affected service/team via the `build-knowledge-company` skill.
+
+## sample-execute-commands.sh (opt-in)
+
+**Checks:** picks up to N SERVICE_KNOWLEDGE.md files, extracts the first `tsuga` command from each, and verifies that each command is a single read-only `tsuga` command with no shell metacharacters.
+
+**Why:** all the other checks are structural — they confirm the file *looks* right. This check catches generated dossiers that would ask an agent to run mutating commands, shell pipelines, redirects, or copied MCP pseudo-syntax.
+
+**Why opt-in:** samples generated service dossiers and can fail archives that otherwise pass structural checks. Enable it with `lint-all.sh --audit-commands`. It does not touch prod, require auth, or spend query quota — the check reads command text and judges its shape, it never runs a command.
+
+**How to fix a FAIL:**
+- Single file fails → regenerate that SERVICE_KNOWLEDGE.md.
+- Multiple files fail with the same error shape → the template or CLI translation rules are wrong. Fix the template, regenerate the batch.
+- If a live query check is needed, do it manually with explicit approval and a copied read-only command.
+
+## When a WARN is acceptable
+
+Warnings are informational. They may be fine in context:
+- Description 120–200 words: OK if the skill genuinely needs extra trigger vocabulary (e.g., `knowledge-company` listing 10+ service names).
+- SKILL.md body 400–500 lines: OK if the body is mostly layout + reference links and trimming would hurt clarity.
+- Nested references dirs (outside the knowledge-company and incident-history exemptions): fine only when the nesting mirrors a generated data structure whose paths an agent can derive. Prose under a nested path is unreachable, not merely untidy.
+- A long reference page with no TOC: fine only when the page is a single list with no internal sections to skip to.
+
+WARN ≠ "ignore". It means "is this intentional? document why in a comment if so."
