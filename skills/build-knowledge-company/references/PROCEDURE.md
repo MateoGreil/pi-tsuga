@@ -256,9 +256,9 @@ jq --arg n "$team_name" '[.[] | select(any(.teams[]?; .team == $n))]' /tmp/servi
 **The big fan-out.** One subagent per service in `/tmp/services-to-dossier.txt`, each given:
 
 - Service name + owning team name and id
-- `$SETUP/build-knowledge-company/references/SERVICE_KNOWLEDGE_TEMPLATE.md`
-- `$SETUP/build-knowledge-company/references/CLI_TRANSLATION.md`
-- `$SETUP/build-knowledge-company/references/LESSONS.md`
+- `${TSUGA_SKILLS_DIR}/build-knowledge-company/references/SERVICE_KNOWLEDGE_TEMPLATE.md`
+- `${TSUGA_SKILLS_DIR}/build-knowledge-company/references/CLI_TRANSLATION.md`
+- `${TSUGA_SKILLS_DIR}/build-knowledge-company/references/LESSONS.md`
 - Helper inputs: `/tmp/service-data/<svc>/{monitors.json,dashboards.json,incident-files.txt}`
 - Top-level refs as pointers only, never to copy from: `$OUT/COMPANY_GENERAL_KNOWLEDGE.md`,
   `$OUT/COMPANY_TELEMETRY_KNOWLEDGE.md`

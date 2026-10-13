@@ -11,7 +11,7 @@ The initial import contains all **18 skills** from plugin version **0.12.6**, at
 - An explicit `pi.skills` manifest exposes the complete skill collection.
 - Each skill loads the shared [Pi runtime notes](references/pi-compat.md).
 - Claude's plugin-root paths become an explicitly resolved `TSUGA_SKILLS_DIR`, with quoted shell paths and Bash interpreter calls.
-- Skill pointers use Pi's `/skill:name` syntax; generated company knowledge resolves its own references outside the package.
+- Skill pointers use Pi's `/skill:name` syntax; generated company knowledge resolves its own references outside the package, and incident citations resolve through the registered archive skill.
 - Ready-to-paste prompts target Pi and the existing Tsuga CLI rather than requiring a Tsuga MCP server.
 - Batch tracking uses a checklist; subagent workflows have a sequential fallback when no subagent tools are installed.
 - The health checker also discovers Pi's user and project skill locations.
@@ -29,6 +29,6 @@ npm test
 npm run lint:skills
 ```
 
-Review the resulting diff and update this document's version and commit links before publishing. The importer replaces only the vendored `skills/` tree, `LICENSE` and `upstream.json`; keep company-specific generated skills in a separate repository. Updates never fetch or run automatically during package installation.
+Review the resulting diff and update this document's version and commit links before publishing. The importer adapts a staged snapshot before replacing the vendored `skills/` tree, `LICENSE` and `upstream.json`, with rollback on replacement errors; keep company-specific generated skills in a separate repository. Updates never fetch or run automatically during package installation.
 
 Tsuga owns the upstream content, distributed under the MIT license reproduced in `LICENSE`.

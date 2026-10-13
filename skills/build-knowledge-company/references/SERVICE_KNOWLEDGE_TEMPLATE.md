@@ -154,7 +154,7 @@ Plus a bullet list of cross-service dependencies / blast radius. Cross-team depe
 2–4 shapes from the archive. Each:
 
 1. **One-sentence title.**
-2. **Anchor incidents** — INC-xxxx, INC-yyyy from `incident-files.txt`. Cite paths: `skills/incident-history/references/incidents/INC-xxxx/SUMMARY.md`.
+2. **Anchor incidents** — INC-xxxx, INC-yyyy from `incident-files.txt`. Cite paths: `incident-history:references/incidents/INC-xxxx/SUMMARY.md`.
 3. **First probe** — which Ready-to-run query or monitor-repro to start with.
 
 Example:
@@ -208,7 +208,7 @@ This section is load-bearing. It's what tells a future investigator which claims
 7. **Every metric name must be real.** Before writing a metric in Golden signals, confirm it's in `tsuga metrics list`. If it isn't, say so in Confidence (low emission? renamed?) rather than writing a plausible-looking name.
 8. **Every monitor ID must be real.** If the subagent's input `monitors.json` is empty, don't invent IDs — write "None owned directly; see §Incident shapes for shared monitors."
 9. **Live probe at least once.** Run `tsuga logs search --query "context.service.name:{service}" --from=-7d --max-results 50` before writing Log shape. The patterns must come from real output.
-10. **Cite incident SUMMARY paths explicitly.** `skills/incident-history/references/incidents/INC-xxxx/SUMMARY.md` — the full relative path. Don't just say "INC-xxxx".
+10. **Cite incident SUMMARY paths explicitly.** `incident-history:references/incidents/INC-xxxx/SUMMARY.md` — resolve the suffix relative to the registered `incident-history` skill's directory, not the build repository or current working directory. Don't just say "INC-xxxx".
 
 ### On framing
 

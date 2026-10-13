@@ -32,6 +32,19 @@ test("native Pi installation exposes all 18 skills without a model request", asy
   assert.doesNotMatch(result.stderr, /warning|collision|invalid skill/i);
 });
 
+test("generated team skill pointers address commands that Pi actually discovers", async (t) => {
+  const sandbox = createPiSandbox(t);
+  installPackage(process.env.PI_TSUGA_TEST_SOURCE ?? root, sandbox);
+  const { commands } = await getCommands(sandbox);
+  const available = new Set(commands.map((command) => `/${command.name}`));
+  const template = readFileSync(join(root, "skills/build-knowledge-company/references/TEAM_KNOWLEDGE_TEMPLATE.md"), "utf8");
+  const pointers = [...template.matchAll(/\/skill:[a-z0-9/-]+/g)].map((match) => match[0]);
+  assert.ok(pointers.length > 0);
+  for (const pointer of pointers) {
+    assert.ok(available.has(pointer), `Pi cannot invoke generated skill pointer ${pointer}`);
+  }
+});
+
 test("published tarball inventory retains every upstream asset and Pi runtime guidance", () => {
   const result = JSON.parse(execFileSync("npm", ["pack", "--dry-run", "--json"], { cwd: root, encoding: "utf8" }))[0];
   const shipped = new Set(result.files.map((file) => file.path));

@@ -7,7 +7,7 @@ Unlike `build-incident-history`, this skill is mostly driven by **live queries**
 Before starting Phase 0:
 
 - **Tsuga CLI authenticated.** Needs read access to teams, monitors, dashboards, log-routes, notification-rules, services, logs, traces, metrics and aggregations.
-- **Tsuga MCP tools available to the orchestrating agent.** Subagents fan out via the orchestrator and will hit MCP tools for the discovery / scoring / live-probe phases. MCP is fine for *internal* probes; the *output* dossiers must carry `tsuga` CLI commands.
+- **Authenticated Tsuga CLI available to every worker.** Use the CLI for discovery, scoring and live probes as well as the output dossiers. No Tsuga MCP server is required.
 - **GitHub access** — optional. No phase calls `gh`; the repo-to-service mapping is read from `inputs/codebase-repos.json` in Phase 5, falling back to the `teams` field on `tsuga services list`.
 
 Confirm:

@@ -101,6 +101,52 @@ test("missing upstream assets fail before changing an existing installation", (t
   assert.equal(readFileSync(join(target, "skills/keep.txt"), "utf8"), "keep");
 });
 
+test("malformed upstream frontmatter preserves the previous skills, license and provenance", (t) => {
+  const { source, target, skills } = fixture(t);
+  mkdirSync(join(target, "skills"), { recursive: true });
+  writeFileSync(join(target, "skills/keep.txt"), "previous skill");
+  writeFileSync(join(target, "LICENSE"), "previous license");
+  writeFileSync(join(target, "upstream.json"), "previous provenance");
+  writeFileSync(join(skills, "check-skill-health/SKILL.md"), "# No frontmatter\n");
+  const result = importFixture(source, target);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Missing upstream frontmatter/);
+  assert.ok(existsSync(join(target, "skills/keep.txt")), "failed import deleted the existing skill tree");
+  assert.equal(readFileSync(join(target, "skills/keep.txt"), "utf8"), "previous skill");
+  assert.equal(readFileSync(join(target, "LICENSE"), "utf8"), "previous license");
+  assert.equal(readFileSync(join(target, "upstream.json"), "utf8"), "previous provenance");
+  assert.equal(existsSync(join(target, "skills/check-skill-health")), false);
+});
+
+test("generated incident citations resolve the registered archive outside the build directory", (t) => {
+  const directory = mkdtempSync(join(tmpdir(), "pi-tsuga citations "));
+  t.after(() => rmSync(directory, { recursive: true, force: true }));
+  const archive = join(directory, "registered archive");
+  mkdirSync(join(archive, "references/incidents/INC-0042"), { recursive: true });
+  writeFileSync(join(archive, "references/incidents/INC-0042/SUMMARY.md"), "verified incident");
+  const template = readFileSync(join(root, "skills/build-knowledge-company/references/SERVICE_KNOWLEDGE_TEMPLATE.md"), "utf8");
+  const citation = template.match(/`((?:skills\/incident-history\/|incident-history:)references\/incidents\/INC-xxxx\/SUMMARY\.md)`/)[1]
+    .replace("INC-xxxx", "INC-0042");
+  const resolved = citation.startsWith("incident-history:")
+    ? join(archive, citation.slice("incident-history:".length))
+    : resolve(directory, "other project", citation);
+  assert.ok(existsSync(resolved), "incident citation still depends on the build working directory");
+  assert.equal(readFileSync(resolved, "utf8"), "verified incident");
+});
+
+test("per-service worker reference paths resolve with only the documented Pi skill directory", () => {
+  const procedure = readFileSync(join(root, "skills/build-knowledge-company/references/PROCEDURE.md"), "utf8");
+  const paths = [...procedure.matchAll(/`((?:\$SETUP|\$\{TSUGA_SKILLS_DIR\})\/build-knowledge-company\/references\/[^`]+)`/g)]
+    .map((match) => match[1]);
+  assert.equal(paths.length, 3);
+  const env = { ...process.env, TSUGA_SKILLS_DIR: join(root, "skills") };
+  delete env.SETUP;
+  for (const path of paths) {
+    const result = spawnSync("bash", ["-c", `test -f "${path}"`], { cwd: tmpdir(), env, encoding: "utf8" });
+    assert.equal(result.status, 0, `worker reference cannot be read: ${path}`);
+  }
+});
+
 test("health checker discovers project and custom Pi skill locations from another directory", (t) => {
   const directory = mkdtempSync(join(tmpdir(), "pi-tsuga lint "));
   t.after(() => rmSync(directory, { recursive: true, force: true }));

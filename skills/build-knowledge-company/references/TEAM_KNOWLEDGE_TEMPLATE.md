@@ -61,7 +61,7 @@ Always use `managed-by=Pulumi` or `oncall=true` tagged dashboards over person-na
 2. **{Shape 2 title}** — …
 3. **{Shape 3 title}** — …
 
-These should be distilled from the team's incident history (greppable in `skills/incident-history/references/incidents/`). Keep to 2–4 shapes; the full archive is the authoritative source for the long tail.
+These should be distilled from the team's incident history (in the registered `incident-history` skill's `references/incidents/` directory). Keep to 2–4 shapes; the full archive is the authoritative source for the long tail.
 
 ## Services with individual dossiers
 
@@ -72,7 +72,7 @@ See `services/<service-name>/SERVICE_KNOWLEDGE.md` for:
 ### Services owned but without a dossier
 
 - `<service-X>` — {one-line reason, e.g., "lambda function, no runtime dashboard, grep by function name"}
-- `<service-Y>` — {e.g., "managed Postgres, see `/skill:knowledge-technology/postgres/` instead"}
+- `<service-Y>` — {e.g., "managed Postgres, see `/skill:knowledge-technology` and `tsuga docs get references/technologies/postgres/overview` instead"}
 ```
 
 ## Rules the orchestrator must follow

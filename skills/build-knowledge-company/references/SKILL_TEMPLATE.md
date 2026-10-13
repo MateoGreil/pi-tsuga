@@ -77,6 +77,10 @@ grep -B2 -A8 -i "queue lag" "$CK/COMPANY_TELEMETRY_KNOWLEDGE.md"
 
 Some services have multiple identities in telemetry (e.g., K8s-scraped vs OTel-self-reported). When that's true, document the OR-match idiom here. See `COMPANY_TELEMETRY_KNOWLEDGE.md §"Service identity"` for the full mapping.
 
+## Incident archive links
+
+Incident citations use `incident-history:references/incidents/INC-id/SUMMARY.md`. Look up `incident-history` in Pi's available skill list and resolve the suffix relative to that skill's `SKILL.md` directory. If the archive is not registered, ask for its absolute directory. Resolve company references from this skill's own directory.
+
 ## Boundary
 
 - **This skill** — *what {company} is, who owns what, how to probe a specific service right now.*

@@ -7,7 +7,7 @@ Read [Pi runtime notes](../../references/pi-compat.md) before executing this ski
 
 # Incident Investigation
 
-Primary entry point. Read-only for everything **except the two standing deliverables** — the Tsuga investigation record and the proofs dashboard (`references/incident-response/investigation-record`) — which every concluded investigation publishes by default (skip conditions in step 10). All other mutations require an explicit user ask.
+Primary entry point. Read-only by default. Propose the Tsuga investigation record and proofs dashboard (`references/incident-response/investigation-record`), then publish them only after explicit user approval. All mutations require approval.
 
 ## How to read this skill
 
@@ -93,7 +93,7 @@ Do not let `failing subsystem` silently replace `root cause`.
 
 For an active incident with ongoing impact, mitigation is the first question, not the last. Identify the fastest action that restores service — rollback, failover, scale, flag flip — and surface it early, in parallel with the RCA; never gate stopping the bleeding on a completed root cause. Mitigation actions postdate `declared_at`; that does not violate Time discipline — they document the response and never feed the causal chain.
 
-Then open a Tsuga investigation record (beta) so progress is visible while you work. This is a default deliverable — create it without asking, unless the user opted out. Check the environment first: `tsuga config` for the active key, and pass `--cluster <id>` explicitly on every call (`tsuga clusters list` to confirm the id) — `tsuga config` reports a saved default cluster, but not one arriving from `--cluster` or `TSUGA_CLUSTER_ID`.
+Propose a Tsuga investigation record (beta) to make progress visible. Obtain explicit approval before creating or updating it; without approval, track progress locally and continue the read-only investigation. Check the environment first: `tsuga config` for the active key, and pass `--cluster <id>` explicitly on every call (`tsuga clusters list` to confirm the id) — `tsuga config` reports a saved default cluster, but not one arriving from `--cluster` or `TSUGA_CLUSTER_ID`.
 
 ```bash
 tsuga investigations create -d '{
@@ -231,14 +231,14 @@ Hallucinated citations are worse than missing ones. When in doubt, demote.
 - `healthy` — alert stale, metric normal, self-recovered
 - `unknown` — insufficient evidence to categorize
 
-### 10. Publish deliverables (default, not optional)
+### 10. Publish approved deliverables
 
-Verdict assigned → publish the two durable artifacts. Full spec and templates: `references/incident-response/investigation-record`.
+Verdict assigned → propose the two durable artifacts and publish only after explicit approval. Full spec and templates: `references/incident-response/investigation-record`.
 
 1. **Proofs dashboard** — one graph per validated telemetry claim, assertion-style graph names, every query probe-verified before create.
 2. **Final investigation record** — one last `tsuga investigations update <id>` that replaces the in-progress notes with the structured document, NOT a dump of the chat verdict. The name drops the "investigating" suffix.
 
-These ship by default — do not ask permission for them. The reference page lists the only sanctioned skip reasons; whichever applies, name it in the chat verdict's `Deliverables:` line. An unexplained skip is a contract violation.
+Ask for explicit approval before publishing these artifacts. Without approval, return proposed deliverables and mark publishing as skipped — awaiting approval. Other skip conditions are in the reference page; name the applicable reason in the verdict's `Deliverables:` line.
 
 ## Output contract
 
